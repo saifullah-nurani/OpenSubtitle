@@ -35,7 +35,7 @@ class OpenSubtitle {
             if (!url.contains("https://www.opensubtitles.org/en/search/")) {
                 throw SubtitleException(
                     SubtitleException.ERROR_CODE_INVALID_URL,
-                    "Invalid URL: URL must contain 'https://www.opensubtitles.org/en/search/'"
+                    "Invalid URL : Use ${URLBuilder::class.java} to build url"
                 )
             }
             // Ensure the URL contains at least one required parameter for a valid search
@@ -117,9 +117,7 @@ class OpenSubtitle {
                             .maxOrNull()
                             ?: currentPage  // Default to current page if no total pages found
                     }
-                    withContext(Dispatchers.Main) {
-                        responseCallback.onSuccess(Result(currentPage, totalPage, subtitle))
-                    }
+                    responseCallback.onSuccess(Result(currentPage, totalPage, subtitle))
                 } else {
                     throw SubtitleException(
                         SubtitleException.ERROR_CODE_NETWORK_FAILURE,

@@ -254,3 +254,21 @@ class URLBuilder : Builder {
         }
     }
 }
+
+/**
+ * Factory function to create a new instance of [URLBuilder].
+ *
+ * This builder allows you to construct a search URL for the Open Subtitles API
+ * by chaining various optional parameters, such as title, IMDb ID,
+ *
+ * Example usage:
+ * ```
+ * val url = URLBuilder()
+ *     .title("ek tha tiger")
+ *     .subLanguageId(SubLanguageId.ENGLISH)
+ *     .build()
+ * ```
+ *
+ * @return A new instance of [OpenSubtitle.UrlBuilder].
+ */
+fun SubtitleURLBuilder() = URLBuilder()
