@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "org.opensubtitle"
-        minSdk = 16
+        minSdk = 19
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -45,5 +45,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation(project(":opensubtile"))
+
+//    implementation("io.github.saifullah-nurani:opensubtitle:1.0.0")
+    implementation(project(":opensubtitle"))
 }

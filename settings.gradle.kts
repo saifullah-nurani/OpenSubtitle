@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "OpenSubtitle"
 include(":app")
-include(":opensubtile")
+include(":opensubtitle")

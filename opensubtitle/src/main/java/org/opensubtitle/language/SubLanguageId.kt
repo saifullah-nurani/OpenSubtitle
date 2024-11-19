@@ -320,6 +320,5 @@ annotation class SubLanguageId {
         const val UZBEK = "uzb"
         const val VIETNAMESE = "vie"
         const val WELSH = "wel"
-
     }
 }

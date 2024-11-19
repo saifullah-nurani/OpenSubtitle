@@ -39,7 +39,7 @@ dependencies {
     implementation(libs.jsoup)
 }
 mavenPublishing {
-    coordinates("io.github.saifullah-nurani", "opensubtitle", "1.0.0")
+    coordinates("io.github.saifullah-nurani", "opensubtitle", "1.1.0")
     pom {
         name.set("Open Subtitle")
         description.set("Open Subtitle is free open source library to download subtitles from www.opensubtitles.org")
