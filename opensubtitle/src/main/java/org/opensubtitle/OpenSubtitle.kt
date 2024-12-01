@@ -8,6 +8,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.opensubtitle.data.Result
 import org.opensubtitle.data.Subtitle
+import org.opensubtitle.data.SubtitleRaw
+import org.opensubtitle.data.toSubtitle
 import org.opensubtitle.exception.SubtitleException
 import org.opensubtitle.http.HttpClient
 import java.io.IOException
@@ -126,26 +128,22 @@ class OpenSubtitle {
                 }
             } catch (e: IOException) {
                 Log.e(TAG, "Network error: ${e.message}")
-                withContext(Dispatchers.Main) {
-                    responseCallback.onFailure(
-                        SubtitleException(
-                            SubtitleException.ERROR_CODE_NETWORK_FAILURE,
-                            "Network error: ${e.message}",
-                            e
-                        )
+                responseCallback.onFailure(
+                    SubtitleException(
+                        SubtitleException.ERROR_CODE_NETWORK_FAILURE,
+                        "Network error: ${e.message}",
+                        e
                     )
-                }
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "Unknown error: ${e.message}")
-                withContext(Dispatchers.Main) {
-                    responseCallback.onFailure(
-                        SubtitleException(
-                            SubtitleException.ERROR_CODE_UNSPECIFIED,
-                            "Unknown error: ${e.message}",
-                            e
-                        )
+                responseCallback.onFailure(
+                    SubtitleException(
+                        SubtitleException.ERROR_CODE_UNSPECIFIED,
+                        "Unknown error: ${e.message}",
+                        e
                     )
-                }
+                )
             } finally {
                 httpClient.disconnect()
             }
@@ -158,74 +156,54 @@ class OpenSubtitle {
      * @param html The response HTML.
      * @return A list of extracted subtitles.
      */
-    private fun parseResponse(html: String?): List<Subtitle> {
-        return REGEX_SUBTITLE.findAll(html ?: "").mapNotNull { matcher ->
-            try {
-                val pageUrl = matcher.groups[1]?.value.orEmpty()
-                val title = matcher.groups[2]?.value.orEmpty()
-                val id = pageUrl.substringBeforeLast("/").substringAfterLast("/").toLongOrNull()
-                val releaseYear = matcher.groups[3]?.value.orEmpty()
-                val description =
-                    matcher.groups[4]?.value.takeIf { it?.contains("<td") == false }
-                val subLanguage = matcher.groups[5]?.value.orEmpty()
-                val subLanguageUrl = matcher.groups[6]?.value.orEmpty()
-                val subLanguageId = subLanguageUrl.substringAfterLast("-")
-                val cd = matcher.groups[7]?.value.orEmpty()
-                val iosTimeStamp = matcher.groups[8]?.value.orEmpty()
-                val dateTime = matcher.groups[9]?.value?.split(Regex("\\s"))
-                val date = dateTime?.firstOrNull().orEmpty()
-                val time = dateTime?.lastOrNull().orEmpty()
-                val zipFileUrl = matcher.groups[10]?.value.orEmpty()
-                val totalDownload = matcher.groups[11]?.value?.toIntOrNull() ?: 0
-                val subFormat = matcher.groups[12]?.value.orEmpty()
-                val votes = matcher.groups[13]?.value?.toDoubleOrNull() ?: 0.0
-                val imdbUrl = matcher.groups[15]?.value.orEmpty()
-                val imdbVoteCount = matcher.groups[14]?.value?.toIntOrNull() ?: 0
-                val imdbId = imdbUrl.substringBeforeLast("/").substringAfterLast("/")
-                val imdbRating = matcher.groups[16]?.value?.toDoubleOrNull() ?: 0.0
-                val uploaderProfileUrl = matcher.groups[17]?.value.orEmpty()
-                val uploaderName = matcher.groups[18]?.value.orEmpty()
-                val uploaderId = uploaderProfileUrl.substringAfterLast("-").toLongOrNull() ?: 0L
-
-                Subtitle(
-                    id = id ?: 0,
-                    title = title,
-                    description = description,
-                    pageUrl = pageUrl,
-                    releaseYear = releaseYear,
-                    subFormat = subFormat,
-                    cd = cd,
-                    zipFileUrl = zipFileUrl,
-                    publishedIsoTimeStamp = iosTimeStamp,
-                    publishedDate = date,
-                    publishedTime = time,
-                    totalDownloads = totalDownload,
-                    votes = votes,
-                    subLanguage = Subtitle.SubLanguage(
-                        language = subLanguage,
-                        languageId = subLanguageId,
-                        languageUrl = subLanguageUrl
-                    ),
-                    imdb = Subtitle.Imdb(
-                        id = imdbId,
-                        rating = imdbRating,
-                        url = imdbUrl,
-                        voteCount = imdbVoteCount
-                    ),
-                    uploader = if (uploaderId == 0L) null else Subtitle.Uploader(
-                        uploaderId, uploaderName, uploaderProfileUrl
-                    )
-                )
-            } catch (e: Exception) {
-                responseCallback.onFailure(
-                    SubtitleException(
-                        SubtitleException.ERROR_CODE_PARSING_FAILURE,
-                        "Error parsing subtitle: ${e.message}", e
-                    )
-                )
-                Log.e(TAG, "Error parsing subtitle: ${e.message}")
-                null // Skip this entry if an error occurs
+    private fun parseResponse(html: String): List<Subtitle> {
+        return SUBTITLE_TABLE_REGEX.findAll(html).mapNotNull { match ->
+            val subtitleTable = match.groupValues[1].ifEmpty { return@mapNotNull null }
+            val tdBlocks = subtitleTable.split("<td")
+            val subtitleRaw = SubtitleRaw()
+            TD1_REGEX.find(tdBlocks.getOrNull(1).orEmpty())?.let {
+                subtitleRaw.pageUrl = it.groupValues.getOrNull(1).orEmpty()
+                subtitleRaw.title = it.groupValues.getOrNull(2).orEmpty().trim()
+                subtitleRaw.releaseYear = it.groupValues.getOrNull(3)?.toInt() ?: 0
+                subtitleRaw.id =
+                    subtitleRaw.pageUrl.split("/").getOrNull(3)?.toLongOrNull() ?: 0
             }
+            TD2_REGEX.find(tdBlocks.getOrNull(2).orEmpty())?.let {
+                subtitleRaw.subLanguageName = it.groupValues.getOrNull(1).orEmpty()
+                subtitleRaw.subLanguageUrl = it.groupValues.getOrNull(2).orEmpty()
+                subtitleRaw.subLanguageId = subtitleRaw.subLanguageUrl.substringAfterLast("-")
+            }
+            TD3_REGEX.find(tdBlocks.getOrNull(3).orEmpty())?.let {
+                subtitleRaw.cd = it.groupValues.getOrNull(1).orEmpty().trim()
+            }
+            TD4_REGEX.find(tdBlocks.getOrNull(4).orEmpty())?.let {
+                subtitleRaw.publishedIsoTimeStamp = it.groupValues.getOrNull(1).orEmpty()
+                it.groupValues.getOrNull(2).orEmpty().let { dateTime ->
+                    subtitleRaw.publishedDate = dateTime.substringBefore(" ")
+                    subtitleRaw.publishedTime = dateTime.substringAfter(" ")
+                }
+            }
+            TD5_REGEX.find(tdBlocks.getOrNull(5).orEmpty())?.let {
+                subtitleRaw.totalDownloads = it.groupValues.getOrNull(1)?.toIntOrNull() ?: 0
+                subtitleRaw.subFormat = it.groupValues.getOrNull(2).orEmpty()
+            }
+            TD6_REGEX.find(tdBlocks.getOrNull(6).orEmpty())?.let {
+                subtitleRaw.voteCount = it.groupValues.getOrNull(1)?.toIntOrNull() ?: 0
+                subtitleRaw.votes = it.groupValues.getOrNull(2)?.toDoubleOrNull() ?: 0.0
+            }
+            org.TD8_REGEX.find(tdBlocks.getOrNull(8).orEmpty())?.let {
+                subtitleRaw.imdbVoteCount = it.groupValues.getOrNull(1)?.toIntOrNull() ?: 0
+                subtitleRaw.imdbUrl = it.groupValues.getOrNull(2).orEmpty()
+                subtitleRaw.imdbRating = it.groupValues.getOrNull(3)?.toDoubleOrNull() ?: .0
+                subtitleRaw.imdbId = subtitleRaw.imdbUrl.split("/").getOrNull(4).orEmpty()
+            }
+            TD9_REGEX.find(tdBlocks.getOrNull(9).orEmpty())?.let {
+                subtitleRaw.uploaderProfileUrl = it.groupValues.getOrNull(1).orEmpty()
+                subtitleRaw.uploaderName = it.groupValues.getOrNull(2).orEmpty()
+                subtitleRaw.uploaderId =
+                    subtitleRaw.uploaderProfileUrl.substringAfterLast("-").toLongOrNull() ?: 0
+            }
+            subtitleRaw.toSubtitle()
         }.toList()
     }
 
@@ -236,7 +214,6 @@ class OpenSubtitle {
 
     companion object {
         private val TAG = OpenSubtitle::class.java.simpleName
-        private const val USER_AGENT = ".opensubtitle"
 
         // search only
         const val MOVIE = "movies"
@@ -277,8 +254,19 @@ class OpenSubtitle {
         private val REGEX_PAGER = Regex("""<div class="pager-list".*?</div>""")
         private val REGEX_CURRENT_PAGE = Regex("""<strong>(\d+)</strong>""")
         private val REGEX_TOTAL_PAGE = Regex("""<a href="[^"]+">(\d+?)</a>""")
-        private val REGEX_SUBTITLE =
-            Regex("""<a class="bnone".*?href="([^"]+).*?">(.*)?\s+\((\d{4}).*>(.*)?\s+.*?<a title="([^"]+).*?href="([^"]+).*?center">([^<\s?]+)\s+.*datetime="([^"]+)?.*title="([^"]+)?.*?href="([^"]+)?.*>(\d{1,})?.*?\s+.*?p">([a-z]+).*?votes">([\d.]+).*?title="(\d+).*?redirect/([^"]+).*?">([\d.]+).*?<a href="([^"]+).*?>(.*?)</a>""")
+
+        // Regex For Subtitle
+        private val SUBTITLE_TABLE_REGEX = """<tr\s+onclick([\s\S]*?)</tr>""".toRegex()
+        private val TD1_REGEX = """href="([^"]+).*?">(.*?)\s+\((\d{4})\)""".toRegex()
+        private val TD2_REGEX = """align=.*title="([^"]+)"\s+href="([^"]+)"""".toRegex()
+        private val TD3_REGEX = """align.*>([^"]+)</td>""".toRegex()
+        private val TD4_REGEX =
+            """align.*datetime="([^"]+)"\s+title="([^"]+).*class.*">([^<]+)""".toRegex()
+        private val TD5_REGEX = """align.*>([^<]+)x\s+.*">([^<]+)""".toRegex()
+        private val TD6_REGEX = """align.*title="(\d+).*?">([^<]+)""".toRegex()
+        private val TD8_REGEX =
+            """align.*title="(\d+).*href="/redirect/([^"]+).*">([\d.]+)""".toRegex()
+        private val TD9_REGEX = """<a href="([^"]+)".*?>([^<]+)""".toRegex()
     }
 
     @StringDef(

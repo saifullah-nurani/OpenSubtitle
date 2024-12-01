@@ -7,9 +7,8 @@ import android.os.Parcelable
 data class Subtitle(
     val id: Long,
     val title: String,
-    val description: String?,
     val pageUrl: String,
-    val releaseYear: String,
+    val releaseYear: Int,
     val subFormat: String,
     val cd: String,
     val zipFileUrl: String,
@@ -18,18 +17,19 @@ data class Subtitle(
     val publishedDate: String,
     val publishedTime: String,
     val votes: Double,
+    val voteCount: Int,
     val subLanguage: SubLanguage,
     val imdb: Imdb?,
     val uploader: Uploader?
 ) : Parcelable {
+
     override fun describeContents(): Int = 0
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeLong(id)
         dest.writeString(title)
-        dest.writeString(description)
         dest.writeString(pageUrl)
-        dest.writeString(releaseYear)
+        dest.writeInt(releaseYear)
         dest.writeString(subFormat)
         dest.writeString(cd)
         dest.writeString(zipFileUrl)
@@ -38,6 +38,7 @@ data class Subtitle(
         dest.writeString(publishedDate)
         dest.writeString(publishedTime)
         dest.writeDouble(votes)
+        dest.writeInt(voteCount)
         dest.writeParcelable(subLanguage, flags)
         dest.writeParcelable(imdb, flags)
         dest.writeParcelable(uploader, flags)
@@ -47,25 +48,23 @@ data class Subtitle(
         override fun createFromParcel(parcel: Parcel): Subtitle {
             val id = parcel.readLong()
             val title = parcel.readString() ?: ""
-            val description = parcel.readString() ?: ""
             val url = parcel.readString() ?: ""
-            val releaseYear = parcel.readString() ?: ""
+            val releaseYear = parcel.readInt()
             val subFormat = parcel.readString() ?: ""
             val cd = parcel.readString() ?: ""
             val zipFileUrl = parcel.readString() ?: ""
-            val directUrl = parcel.readString() ?: ""
             val totalDownloads = parcel.readInt()
             val dateTime = parcel.readString() ?: ""
             val publishedDate = parcel.readString() ?: ""
             val publishedTime = parcel.readString() ?: ""
             val votes = parcel.readDouble()
+            val voteCount = parcel.readInt()
             val subLanguage = parcel.readParcelable(SubLanguage::class.java)!!
             val imdb = parcel.readParcelable(Imdb::class.java)!!
             val uploader = parcel.readParcelable(Uploader::class.java)!!
             return Subtitle(
                 id,
                 title,
-                description,
                 url,
                 releaseYear,
                 subFormat,
@@ -76,6 +75,7 @@ data class Subtitle(
                 publishedDate,
                 publishedTime,
                 votes,
+                voteCount,
                 subLanguage,
                 imdb,
                 uploader
@@ -140,20 +140,20 @@ data class Subtitle(
     }
 
     data class SubLanguage(
-        val language: String,
-        val languageId: String,
-        val languageUrl: String,
+        val name: String,
+        val id: String,
+        val url: String,
     ) : Parcelable {
         override fun describeContents(): Int = 0
 
         override fun writeToParcel(dest: Parcel, flags: Int) {
-            dest.writeString(language)
-            dest.writeString(languageId)
-            dest.writeString(languageUrl)
+            dest.writeString(name)
+            dest.writeString(id)
+            dest.writeString(url)
         }
 
         override fun toString(): String {
-            return "SubLanguage(language='$language', languageId='$languageId')"
+            return "SubLanguage(name='$name', id='$id', url='$url')"
         }
 
         companion object CREATOR : Parcelable.Creator<SubLanguage> {
