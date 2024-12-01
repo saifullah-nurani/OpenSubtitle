@@ -46,6 +46,5 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-//    implementation("io.github.saifullah-nurani:opensubtitle:1.0.0")
-    implementation(project(":opensubtitle"))
+    implementation("io.github.saifullah-nurani:opensubtitle:1.1.2")
 }
