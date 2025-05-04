@@ -22,3 +22,5 @@ dependencyResolutionManagement {
 rootProject.name = "OpenSubtitle"
 include(":app")
 include(":opensubtitle")
+include(":opensubtitle-core")
+include(":opensubtitle-okhttp")
