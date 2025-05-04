@@ -4,13 +4,13 @@ plugins {
 }
 
 android {
-    namespace = "org.opensubtitle"
-    compileSdk = 34
+    namespace = "io.github.saifullah.nurani.opensubtitle.demo"
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "org.opensubtitle"
-        minSdk = 19
-        targetSdk = 34
+        applicationId = "io.github.saifullah.nurani.opensubtitle.demo"
+        minSdk = 21
+        targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
 
@@ -27,11 +27,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "21"
     }
 }
 
@@ -39,12 +39,12 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.material)
     implementation(libs.androidx.activity)
-    implementation(libs.androidx.constraintlayout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    implementation("io.github.saifullah-nurani:opensubtitle:1.1.2")
+    implementation("io.github.saifullah-nurani:opensubtitle:1.2.1")
+    implementation("io.github.saifullah-nurani:opensubtitle-okhhtp:1.2.1")
+    implementation("io.github.saifullah-nurani:opensubtitle-core:1.2.1")
 }

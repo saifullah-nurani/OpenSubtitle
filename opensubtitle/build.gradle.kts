@@ -3,15 +3,15 @@ import com.vanniktech.maven.publish.SonatypeHost
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.kotlin.android)
-    id("com.vanniktech.maven.publish") version "0.29.0"
+    id("com.vanniktech.maven.publish") version libs.versions.mavenpublishing
 }
 
 android {
-    namespace = "org.opensubtitle"
-    compileSdk = 34
+    namespace = "io.github.saifullah.nurani.opensubttitle"
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 16
+        minSdk = libs.versions.minimumSdk.get().toInt()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -26,20 +26,22 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "21"
     }
 }
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-    implementation(libs.jsoup)
+    implementation(project(":opensubtitle-core"))
 }
+
 mavenPublishing {
-    coordinates("io.github.saifullah-nurani", "opensubtitle", "1.1.2")
+
+    coordinates("io.github.saifullah-nurani", "opensubtitle", libs.versions.libVersion.get())
     pom {
         name.set("Open Subtitle")
         description.set("Open Subtitle is free open source library to download subtitles from www.opensubtitles.org")
