@@ -81,8 +81,7 @@ class OpenSubtitle {
          *
          * Once closed, the client can no longer be used to perform requests.
          */
-        val isClosed: Boolean
-            get() = httpClient.isClosed
+        val isClosed: Boolean get() = httpClient.isClosed
 
         /**
          * Closes the underlying HTTP client and releases all associated resources.
@@ -117,15 +116,12 @@ class OpenSubtitle {
      *
      * @param url The search URL from OpenSubtitles (must be a valid HTML search result page).
      * @param page The page number to fetch, must be >= 1 (default is 1).
-     * @param callback A callback to receive the result or an error.
+     * @return A SubtitleData object matching the search criteria and pages.
+     * @throws OpenSubtitleException if an error occurs during the subtitle search process.
      */
-    fun search(url: String, @IntRange(from = 1) page: Int, callback: ResultCallback) {
-        try {
-            val data = SearchEndpoint(httpClient).invoke(url, page)
-            callback.onSuccess(data)
-        } catch (e: OpenSubtitleException) {
-            callback.onFailure(e)
-        }
+    @Throws(OpenSubtitleException::class)
+    fun search(url: String, @IntRange(from = 1) page: Int): io.github.saifullah.nurani.opensubtitle.data.SubtitleData {
+        return SearchEndpoint(httpClient).invoke(url, page)
     }
 
     /**
@@ -140,29 +136,7 @@ class OpenSubtitle {
         return DirectLinkEndPoint(httpClient).invoke(id)
     }
 
-    /**
-     * A callback interface to handle subtitle search results from OpenSubtitles.
-     *
-     * This interface is designed for both Java and Kotlin interoperability.
-     * Implement this interface to receive either a successful list of subtitles
-     * or an exception in case of failure.
-     */
-    interface ResultCallback {
 
-        /**
-         * Called when the subtitle search is successful.
-         *
-         * @param result A objects matching the search criteria and pages.
-         */
-        fun onSuccess(result: io.github.saifullah.nurani.opensubtitle.data.SubtitleData)
-
-        /**
-         * Called when an error occurs during the subtitle search process.
-         *
-         * @param throwable An instance of [OpenSubtitleException] containing the error details.
-         */
-        fun onFailure(throwable: Throwable)
-    }
 
 
     /**

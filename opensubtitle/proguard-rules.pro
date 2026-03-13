@@ -5,17 +5,16 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Preserve all public classes and their public members in the main library package
+-keep public class io.github.saifullah.nurani.opensubtitle.** {
+    public *;
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Preserve all data classes used for parsing/response
+-keep class io.github.saifullah.nurani.opensubtitle.data.** { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Preserve enums and their methods
+-keepclassmembers enum io.github.saifullah.nurani.opensubtitle.** {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
